@@ -32,6 +32,11 @@ const resolvers = {
                 throw new AuthenticationError('Incorrect login information.');
             }
 
+            const correctPassword = await user.isCorrectPassword(password);
+            if (!correctPassword) {
+                throw new AuthenticationError('Incorrect login information.')
+            }
+
             const token = signToken(user);
             return { token, user };
         },
@@ -45,6 +50,17 @@ const resolvers = {
                 return updatedBooks;
             }
             throw new AuthenticationError('Please login to save a book!');
+        },
+        removeBook: async (parent, { bookId }, context) => {
+            if(context.user) {
+                const updatedUser = await User.findOneAndUpdate(
+                    { _id: context.user.id },
+                    { $pull: { savedBooks: bookId }},
+                    { new: true }
+                );
+                return updatedUser;
+            }
+            throw new AuthenticationError('Please login to remove a book!');
         }
     }
 };
